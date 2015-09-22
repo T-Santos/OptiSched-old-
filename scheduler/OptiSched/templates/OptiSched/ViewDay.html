@@ -1,0 +1,9 @@
+{% if shifts_per_date %}
+    <ul>
+    {% for shift in shifts_per_date %}
+        <li><a href="/Optisched/{{ Date }}/">{{ shift.display_details }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No shifts are available to display.</p>
+{% endif %}

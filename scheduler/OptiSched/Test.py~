@@ -1,0 +1,4 @@
+import MakeObject
+
+if __name__ == "__main__":
+    make_schedule("2015-09-12")

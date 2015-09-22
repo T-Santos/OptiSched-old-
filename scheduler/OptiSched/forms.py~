@@ -1,0 +1,8 @@
+from django import forms
+
+import datetime
+
+class DateForm(forms.Form):
+	day = forms.DateField(initial = datetime.date.today)
+
+

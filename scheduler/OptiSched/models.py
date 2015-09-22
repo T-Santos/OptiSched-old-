@@ -1,0 +1,120 @@
+import datetime
+import time
+#from datetime import datetime, timedelta
+
+from django.db import models
+from django.utils import timezone
+
+''' Class EmployeePreference(models.Model):
+		morning , noon, evening
+		list of days
+'''    
+
+class Person(models.Model):
+
+	# shifts = models.ForeignKey('Shift')
+	# maybe make employee model
+	
+	first_name = models.CharField(max_length=60)
+	last_name = models.CharField(max_length=60)
+
+	def name(self):
+        	return ''.join([self.last_name,',', self.first_name])
+
+	def __str__(self):             	
+	        return str(self.name()) + ' (id: ' + str(self.id) + ')'
+
+
+class Shift(models.Model):
+
+	shift_date = models.ForeignKey('Date')
+	employee = models.ForeignKey(Person)
+    
+    	start_time = models.TimeField("Start time")
+	end_time = models.TimeField("End time")
+	def hours(self):
+		start_hours = self.start_time.hour
+		if (self.end_time.hour == 23 and
+		    self.end_time.minute > 0 ):
+			end_hours = 24
+		elif (self.end_time.hour == 0 and
+		      self.end_time.minute == 0):
+			end_hours = 24
+		elif (self.end_time.hour == 0 and
+		      self.end_minute > 0):
+			end_hours = 1
+		else:
+			end_hours = self.end_time.hour
+		duration = end_hours - start_hours
+		return abs(duration)
+
+	def hours_disp(self):
+		return str(self.hours())
+
+	def display_details(self):
+		return str(self.employee.name()) + ' ' + self.hours_disp() + ' hours'
+
+	def __str__(self):
+		return self.display_details()
+
+class Date(models.Model):
+	date = models.DateField(primary_key=True,
+			        default=datetime.date.today)
+	# Schedule Params
+	day_start_time = models.TimeField("Day Start time",
+				          default = datetime.time(8,0,0))
+	day_end_time = models.TimeField("Day End time",
+				        default = datetime.time(23,59,0))
+	
+	def total_hours(self):
+		start_hours = self.day_start_time.hour
+		if (self.day_end_time.hour == 23 and
+		    self.day_end_time.minute > 0 ):
+			end_hours = 24
+		elif (self.day_end_time.hour == 0 and
+		      self.day_end_time.minute == 0):
+			end_hours = 24
+		elif (self.day_end_time.hour == 0 and
+		      self.day_end_minute > 0):
+			end_hours = 1
+		else:
+			end_hours = self.day_end_time.hour
+		duration = end_hours - start_hours
+		return abs(duration)
+
+	# is holiday YN BooleanField property
+	def day_of_week(self):
+		dow = self.date.weekday()
+    		if dow == 0:
+        		dow = 'Monday'
+    		elif dow == 1:
+        		dow = 'Tuesday'
+    		elif dow == 2:
+        		dow = 'Wednesday'
+    		elif dow == 3:
+        		dow = 'Thursday'
+    		elif dow == 4:
+        		dow = 'Friday'
+    		elif dow == 5:
+        		dow = 'Saturday'
+    		elif dow == 6:
+        		dow = 'Sunday'
+    		else:
+        		dow = 'Undefined'
+		return dow		
+
+	def week(self):
+		return self.date.isocalendar()[1]
+
+	def date_display(self):
+        	 return str(self.date) + ' ' + self.day_of_week() + ' of week ' + str(self.week())
+
+	def __str__(self):
+		return str(self.date)
+
+	
+
+	
+
+
+
