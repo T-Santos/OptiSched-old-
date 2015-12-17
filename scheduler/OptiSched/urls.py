@@ -2,6 +2,12 @@ from django.conf.urls import url
 
 from . import views
 
+'''
+
+o When capturing ags in the url, they need to have the same name
+  as whats being received in the views.py def for that view
+'''
+
 urlpatterns = [
 
 	# ------ Navigation ------
@@ -19,13 +25,18 @@ urlpatterns = [
 	url(r'^Employees/$', views.employees, name='employees'),
 
 	# ex: /OptiSched/<Date>/Week
-	url(r'^Week/(?P<date>\d{4}-\d{2}-\d{2})/$', views.week, name='week'),
+	#url(r'^Week/(?P<date>\d{4}-\d{2}-\d{2})/$', views.week, name='week'),
+
+	#ex /OPtiSched/Year/NNNN/Week/NN/Employee/N+/
+	url(r'^Year/(?P<year_num>\d{4})/Week/(?P<week_num>\d{2})/Employee/(?P<employee_id>[0-9]+)/$', views.employee_week, name='employee_week'),
 
 	# ex: /OptiSched/<Date>/
     	url(r'^(?P<date>\d{4}-\d{2}-\d{2})/$', views.day, name='day'),
 
     	# ex: /OptiSched/<Date>/<Employee_Id>/
     	url(r'^(?P<date>\d{4}-\d{2}-\d{2})/(?P<Person_id>[0-9]+)/$', views.day_person, name='day_person'),
+
+	# ex /OptiSched/Week/<number>/
 
 	# ------ Action -------
 
