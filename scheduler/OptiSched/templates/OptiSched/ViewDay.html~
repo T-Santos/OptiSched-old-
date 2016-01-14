@@ -9,6 +9,11 @@
     <p>No shifts are available to display.</p>
 {% endif %}
 -->
+{% extends 'base_schedule.html' %}
+
+{% block head_title %}Week | {{ block.super }} {% endblock %}
+
+{% block content %}
 <style> 
 
 #employee_list{
@@ -85,6 +90,7 @@
 		</td>
 		
 	</tr>
+	<!-- end table header -->
 
 	<!-- table body -->
 	{% for shift in shifts_per_date %}
@@ -116,8 +122,13 @@
 					
 		</tr>
 	{% endfor %}
+	<!-- end table body -->
 	</table>
 {% else %}
 	<p> No shifts are available </p>
 {% endif %}
+</div>
+</div>
+
+{% endblock %}
 

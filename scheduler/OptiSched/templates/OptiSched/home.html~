@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+ <!-- needs to be below extends 
+{% load crispy_forms_tags %}-->
+
+ <!-- Browser tab's title -->
+{% block head_title %}Welcome | {{ block.super }} {% endblock %}
+
+{% block main_banner %}
+{% url 'OptiSched:about' as about_url %}
+
+ <!-- Main component for a primary marketing message or call to action -->
+      <div class="jumbotron">
+        <h1>OptiSched</h1>
+        <p>Sick of making a schedule every week?</p>
+        <p>Sick of having to worry about factoring in time-off, preferences?</p>
+        <p>If you've answered yes to any of these questions, look no further. Sign up today.</p>
+        <p>
+          <a class="btn btn-lg btn-primary" href="{{ about_url }}" role="button">Want to know more...? &raquo;</a>
+        </p>
+      </div>
+{% endblock %}
+
+{% block content %}
+  This is temp content
+{% endblock %}
+

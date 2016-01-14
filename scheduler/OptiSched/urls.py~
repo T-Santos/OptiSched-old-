@@ -2,18 +2,35 @@ from django.conf.urls import url
 
 from . import views
 
+'''
+
+o When capturing ags in the url, they need to have the same name
+  as whats being received in the views.py def for that view
+'''
+
 urlpatterns = [
 
+	# ------ Main Pages -------
+	url(r'^$', views.home, name='home'),
+	url(r'^Home/', views.home, name='home'),
+	url(r'^About/$', views.about, name='about'),
+	url(r'^Contact/$', views.contact, name='contact'),
+	url(r'^Dashboard/$', views.dashboard, name='dashboard'),
+
 	# ------ Navigation ------
+	url(r'^ViewManagerDay/$', views.ViewManagerDay, name='ViewManagerDay'),
 
 	# ex: /OptiSched/
-	url(r'^$', views.index, name='index'),
+	#url(r'^$', views.index, name='index'),
 
 	#TODO: /OptiSched/Weeks/   (This should iterate weeks that then break down a week date)
 
 	#TODO: /OptiSched/Days/    (This should iterate days that then link to OptiSched/<Date>)
 
 	# ------ Views --------
+
+	# /OptiSched/
+	#url(r'^Dashboard/$', views.dashboard, name='dashboard'),
 
 	# /OptiSched/Employees/
 	url(r'^Employees/$', views.employees, name='employees'),

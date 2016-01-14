@@ -1,4 +1,8 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 from django.http import HttpResponse, HttpResponseRedirect
+
+from django.contrib.auth.decorators import login_required
 
 from django.core.urlresolvers import reverse
 
@@ -8,11 +12,16 @@ from django.shortcuts import render_to_response, get_object_or_404, render
 
 from .models import Date,Shift,Person
 
-from .forms import DateForm
+from .forms import NavDateForm,CreateDateForm
 
 import operator
 import collections
-from datetime import date, timedelta
+from datetime import datetime,date, timedelta
+import datetime as dt
+
+# turning date from external to internal
+from django.utils.dateformat import DateFormat
+from django.utils.formats import get_format
 
 import pdb
 
@@ -23,41 +32,82 @@ import ScheduleDateTimeUtilities
 def index(request):
 	return HttpResponse("Hello, world. You're at the OptiSched index.")
 '''
+
+def home(request):
+	context = {}
+	template = "home.html"
+	return render(request,template,context)
+
+def about(request):
+	context = {}
+	template = "About.html"
+	return render(request,template,context)
+
+def contact(request):
+	context = {}
+	template = "Contact.html"
+	return render(request,template,context)
+
+@login_required
+def dashboard(request):
+	# TODO: Maybe pass if the user is an employee or manager to show them a different dash
+	context = {}
+	template = "Dashboard.html"
+	return render(request,template,context)
+
+
 def index(request):
 
 	if(request.GET.get('mybtn')):
    		 MakeObject.make_object( int(request.GET.get('mytextbox')) )
-	return render_to_response('OptiSched/index.html')
+	return render_to_response('index.html')
 
 def create_schedule(request):
+
+	template_stay = 'CreateSchedule.html'
+	template_redirect = 'OptiSched:ViewManagerDay'
+	
 	# if this is a POST request we need to process the form data
 	if request.method == 'POST':
         	# create a form instance and populate it with data from the request:
-        	form = DateForm(request.POST)
+		create_date_form = CreateDateForm(request.POST)
+		
         	# check whether it's valid:
-        	if form.is_valid():
+        	if create_date_form.is_valid():
         		# process the data in form.cleaned_data as required
-			new_date = form.cleaned_data['day']
+			'''			
+			date_external = create_date_form.cleaned_data['f_createdate']
+			dateformat = DateFormat(date_external)
+			new_date = dateformat.format('Y-m-d')
+			'''
+			new_date = date_external = create_date_form.cleaned_data['f_createdate']
+			
 			if(Date.objects.filter(date=new_date)):
-				form = DateForm()
-				return render(request, 'OptiSched/CreateSchedule.html', {'form': form,
-											 'error_msg': "Schedule already exists for this date",
-											})
+				context = {
+						'CreateDateForm': create_date_form,
+						'error_msg': "Schedule already exists for this date",
+					}
+				return render(request,template_stay,context)
             		# redirect to a new URL:
 			else:
 				# Create a new schedule with the new_date
+				request.session['DATE_STR'] = new_date.isoformat()
 				MakeObject.make_schedule( new_date )
-            			return HttpResponseRedirect(reverse('OptiSched:day',args=[new_date]))
+            			return HttpResponseRedirect(reverse(template_redirect))
 		# not necessary, form takes care of this		
 		else:
-			return render(request, 'OptiSched/CreateSchedule.html', {'form': form,
-										 'error_msg': "Need a date.",
-										})
+			#pdb.set_trace()
+			context = {
+					'CreateDateForm': create_date_form,
+					'error_msg': "Invalid Date Format",
+					}
+			return render(request,template_stay,context)
 
     	# if a GET (or any other method) we'll create a blank form
     	else:
-        	form = DateForm()
-		return render(request, 'OptiSched/CreateSchedule.html', {'form': form})
+		create_date_form = CreateDateForm(initial = request.GET)
+		context = {'CreateDateForm': create_date_form}
+		return render(request,template_stay,context)
 
 	
 
@@ -91,6 +141,81 @@ def week(request, date):
     					   })
   	return HttpResponse(template.render(context))
 
+@login_required
+def ViewManagerDay(request):
+
+	template = 'ViewManagerDay.html'
+
+	if request.method == 'POST':
+	
+		navform = NavDateForm(request.POST)
+
+		if navform.is_valid():
+        		# process the data in form.cleaned_data as required
+			#date_external = navform.cleaned_data['navdate']
+			#dateformat = DateFormat(date_external)
+			#date = dateformat.format('Y-m-d')
+
+			date = navform.cleaned_data['navdate']
+			
+			if date:
+				try:
+					work_day = Date.objects.get(date=date)
+		    			shifts_per_date = Shift.objects.filter(shift_date=date)
+					shifts_per_date = sorted(shifts_per_date, key=operator.attrgetter('start_time'))
+		    			context = {
+							'NavDateForm': navform,
+							'work_day': work_day,
+							'work_day_display': work_day.date_display,
+		   					'shifts_per_date': shifts_per_date,
+							'hours_in_day': list(range(0,24)),
+		    					}
+				except ObjectDoesNotExist:
+    					context = {
+							'NavDateForm': navform,							
+							'Error': "No Schedule For Date",
+							}
+		else:
+		
+			context = {
+					'NavDateForm': navform,
+					}
+	else:
+		
+		navform = NavDateForm(initial = request.GET)
+		  
+		if request.session.get('DATE_STR',False):
+			date = request.session['DATE_STR']
+			request.session['DATE'] = None
+		elif request.GET.get('navdate',False):
+			date = request.GET['navdate']
+		else:
+			date = dt.datetime.today().strftime("%Y-%m-%d")			
+		if date:
+			try:
+				work_day = Date.objects.get(date=date)
+	    			shifts_per_date = Shift.objects.filter(shift_date=date)
+				shifts_per_date = sorted(shifts_per_date, key=operator.attrgetter('start_time'))
+	    			context = {
+						'NavDateForm': navform,
+						'work_day': work_day,
+						'work_day_display': work_day.date_display,
+	   					'shifts_per_date': shifts_per_date,
+						'hours_in_day': list(range(0,24)),
+	    					}
+			except ObjectDoesNotExist:
+				context = {
+						'NavDateForm': navform,							
+						'Error': "No Schedule For Date",
+						}
+		else:
+			context = {
+					'NavDateForm': navform,
+				}
+
+	return render(request,template,context)
+
+@login_required
 def employees(request):
 
 	employee_list = Person.objects.all()
@@ -101,6 +226,7 @@ def employees(request):
 					 })
 	return HttpResponse(template.render(context))
 
+@login_required
 def day(request, date):
 	work_day = Date.objects.get(date=date)
     	shifts_per_date = Shift.objects.filter(shift_date=date)
@@ -117,6 +243,7 @@ def day(request, date):
 def day_person(request, date, Person_id):
     	return HttpResponse("You're looking at the date %s for employee %s." % (date,Person_id))
 
+@login_required
 def employee_week(request, year_num, week_num, employee_id):
 	
 	week_dates = collections.namedtuple('week_dates', ['start_date','end_date'])

@@ -10,16 +10,30 @@ o When capturing ags in the url, they need to have the same name
 
 urlpatterns = [
 
+	# ------ Main Pages -------
+	url(r'^$', views.home, name='home'),
+	url(r'^Home/', views.home, name='home'),
+	url(r'^About/$', views.about, name='about'),
+	url(r'^Contact/$', views.contact, name='contact'),
+	url(r'^Dashboard/$', views.dashboard, name='dashboard'),
+
+	# ------ Actions ---------
+	url(r'^CreateSchedule/$', views.create_schedule, name='create_schedule'),
+
 	# ------ Navigation ------
+	url(r'^ViewManagerDay/$', views.ViewManagerDay, name='ViewManagerDay'),
 
 	# ex: /OptiSched/
-	url(r'^$', views.index, name='index'),
+	#url(r'^$', views.index, name='index'),
 
 	#TODO: /OptiSched/Weeks/   (This should iterate weeks that then break down a week date)
 
 	#TODO: /OptiSched/Days/    (This should iterate days that then link to OptiSched/<Date>)
 
 	# ------ Views --------
+
+	# /OptiSched/
+	#url(r'^Dashboard/$', views.dashboard, name='dashboard'),
 
 	# /OptiSched/Employees/
 	url(r'^Employees/$', views.employees, name='employees'),
@@ -38,10 +52,7 @@ urlpatterns = [
 
 	# ex /OptiSched/Week/<number>/
 
-	# ------ Action -------
-
-	# ex: /OptiSched/CreateSchedule/	
-	url(r'^CreateSchedule/$', views.create_schedule, name='create_schedule'),	
+	# ------ Action -------	
 	
 	# ------- Testing ------
 

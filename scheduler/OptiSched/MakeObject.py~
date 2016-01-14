@@ -248,11 +248,6 @@ def GetNewEmployee(cur_date,
 	#------
 	year_num = cur_date.date.year
 	week_num = cur_date.week()
-
-	# X number of type of person on at all certain time of day say
-	# 1 manager,2 cooks,2 line preps on from if current hour is between 8 and 4
-	# 1 manager,1 cook, 2 line prep from 4 to midnight (what if times overlap, over staff or under staff?)
-
 	
 	# get all employees
 	qs_all_employees = Person.objects.all()

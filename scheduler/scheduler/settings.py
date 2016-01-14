@@ -31,12 +31,18 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
+    # django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 3rd party apps
+    'crispy_forms',
+    'registration',
+    # my apps
     'OptiSched',
 )
 
@@ -49,6 +55,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # Me added below for passing datetimes around
+    'django.core.serializers.json.DateTimeAwareJSONEncoder',
 )
 
 ROOT_URLCONF = 'scheduler.urls'
@@ -56,7 +64,9 @@ ROOT_URLCONF = 'scheduler.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'),
+		 os.path.join(BASE_DIR, 'templates/registration/'),
+		 os.path.join(BASE_DIR, 'OptiSched/templates/OptiSched/')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -101,3 +111,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),"OptiSched/static")
+
+STATICFILES_DIRS = (
+	#os.path.join(BASE_DIR,"OptiSched/static"),
+	"/home/tyler/Documents/scheduler/OptiSched/static/",
+)
+
+# django registration redux app
+ACCOUNT_ACTIVATION_DAYS = 7
+REGISTRATION_AUTO_LOGIN = True
+SITE_ID = 1
+LOGIN_REDIRECT_URL =  '/OptiSched/Dashboard'
+
+# crispy forms tags
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
