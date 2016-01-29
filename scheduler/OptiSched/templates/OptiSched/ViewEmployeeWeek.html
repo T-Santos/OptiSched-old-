@@ -1,6 +1,6 @@
 {% extends 'base_schedule.html' %}
 
-{% block head_title %}Manager Day | {{ block.super }} {% endblock %}
+{% block head_title %}Employee Week | {{ block.super }} {% endblock %}
 
 {% block content %}
 
@@ -8,6 +8,7 @@
 
 .progress-bar-trans {
 	background-color: transparent !important;
+	/*color: gray;*/
 }
 </style>
 
@@ -19,7 +20,7 @@
 		      <!-- TODO add a check box somewher to see if we want to suppress time
 		      		and check condition before displaying -->
 		      <tr>
-		        <th>Employee</th>
+		        <th>Date</th>
 		        <th>Position</th>
 		        <th>Shift</th>
 		        <th></th>
@@ -30,12 +31,12 @@
 		      <!-- TODO add a check box somewher to see if we want to suppress time
 		      		and check condition before displaying -->
 		      <tr>
-		        <td> {{ shift.employee }} (ID:{{ shift.employee.id }}) </td>
+		        <td> {{ shift.display_shift_details }} </td>
 		        <td>{{ shift.shift_employee_type }}</td>
 		        <td>{{ shift.start_time }} - {{ shift.end_time }}</td>
 		        <td>
 		        	<a href="{{ shift.get_employee_week_url }}">
-		        		<span class="glyphicon glyphicon-align-center"></span>
+		        		<span class="glyphicon glyphicon-search"></span>
 		        	</a>
 		        	<span class="glyphicon glyphicon-user"></span>
 		        	<span class="glyphicon glyphicon-trash"></span>
@@ -49,7 +50,7 @@
 			  		<div class="progress-bar progress-bar-trans" role="progressbar" style="width:{{ shift.before_working_day_pc }}%">
 			    		Not working
 			  		</div>
-			 		<div class="progress-bar progress-bar-success  role="progressbar" style="width:{{ shift.working_day_pc }}%">
+			 		<div class="progress-bar progress-bar-success" role="progressbar" style="width:{{ shift.working_day_pc }}%">
 			    		Working 
 			  		</div>
 				</div>

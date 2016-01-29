@@ -4,6 +4,9 @@ import time
 from django.db import models
 from django.utils import timezone 
 
+from django.core.urlresolvers import reverse
+from django.db.models import permalink
+
 # Create Shift Error logging
 # Date and Error Code (internal / external)
 
@@ -52,9 +55,14 @@ class Shift(models.Model):
 	# Employee Type for employee
 	# TODO: Limit choices to the employee's employee types?
 	shift_employee_type = models.ForeignKey('EmployeeType')
-    
-    	start_time = models.TimeField("Start Time")
+	start_time = models.TimeField("Start Time")
 	end_time = models.TimeField("End Time")
+
+	def before_working_day_pc(self):
+		return ((self.start_time.hour / float(24) ) * 100)
+
+	def working_day_pc(self):
+		return (((self.end_hour() - self.start_time.hour) /  float(24) ) * 100)
 
 	def hours(self):
 		start_hours = self.start_time.hour
@@ -85,10 +93,17 @@ class Shift(models.Model):
 
 	def get_week(self):
 		return self.shift_date.date.isocalendar()[1]
-	get_week.short_description = "week"
+	#get_week.short_description = "week"
+
+	def get_employee_week_url(self):
+		return reverse('OptiSched:ViewEmployeeWeek',kwargs={'employee_id': self.employee.id,
+															'date': self.shift_date.date.isoformat(),})
 
 	def display_details(self):
 		return str(self.employee.name()) + ' Position: ' + str(self.shift_employee_type) + ' For: ' + self.hours_disp() + ' hours'
+
+	def display_shift_details(self):
+		return (str(self.shift_date.day_of_week()) + ' ' + str(self.shift_date.date))
 
 	def __str__(self):
 		return self.display_details()
@@ -101,6 +116,10 @@ class Date(models.Model):
 				          default = datetime.time(8,0,0))
 	day_end_time = models.TimeField("Day End Time",
 				        default = datetime.time(23,59,0))
+
+	def get_absolute_url(self):
+		#return reverse('OptiSched:day',args=(self.date.isoformat(),))
+		return reverse('OptiSched:ViewManagerDay2',kwargs={'date': self.date.isoformat(),})
 	
 	def total_hours(self):
 		start_hours = self.day_start_time.hour

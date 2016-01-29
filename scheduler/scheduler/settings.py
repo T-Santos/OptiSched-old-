@@ -122,7 +122,9 @@ STATICFILES_DIRS = (
 # django registration redux app
 ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_AUTO_LOGIN = True
-SITE_ID = 1
+#SITE_ID = 1 #"OptiSched.com"
+SITE_ID = 2 #"localhost:8000"
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 LOGIN_REDIRECT_URL =  '/OptiSched/Dashboard'
 
 # crispy forms tags

@@ -24,6 +24,9 @@ SECRET_KEY = 'zg^k+y4co)4baja!y&f(=8ucr+k0co@#3i1th!fr6f95w6e$tp'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+#SITE_ID = 1 #"OptiSched.com"
+SITE_ID = 2 #"localhost:8000"
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ALLOWED_HOSTS = []
 
@@ -55,6 +58,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # Me added below for passing datetimes around
+    'django.core.serializers.json.DateTimeAwareJSONEncoder',
 )
 
 ROOT_URLCONF = 'scheduler.urls'
