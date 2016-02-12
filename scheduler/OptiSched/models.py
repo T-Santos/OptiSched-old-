@@ -79,7 +79,7 @@ class Shift(models.Model):
 		      self.end_time.minute == 0):
 			end_hours = 24
 		elif (self.end_time.hour == 0 and
-		      self.end_minute > 0):
+		      self.end_time.minute > 0):
 			end_hours = 1
 		else:
 			end_hours = self.end_time.hour
@@ -115,7 +115,7 @@ class Date(models.Model):
 	day_start_time = models.TimeField("Day Start Time",
 				          default = datetime.time(8,0,0))
 	day_end_time = models.TimeField("Day End Time",
-				        default = datetime.time(23,59,0))
+				        default = datetime.time(23,0,0))
 
 	def get_absolute_url(self):
 		#return reverse('OptiSched:day',args=(self.date.isoformat(),))
@@ -166,90 +166,122 @@ class Date(models.Model):
 
 	def __str__(self):
 		return str(self.date)
-'''
-TODO: Allow to specify typical days that employees request off such as every 
-	tuesday a certain employee cannot work (so starting at (0,0,0)
-	or every tuesday an employee only works morning not noon so (12,0,0)
 
-class DayTimeRequest(models.Model):
+class EmployeeTypeShiftError(models.Model):
+
+	# date for notification
+	error_date = models.ForeignKey('Date')
+
+	error_time = models.TimeField("Error Time")
+
+	# Employee Type if found an error having to do with employee types
+	error_emp_type = models.ForeignKey('EmployeeType')
+
+	def error_display_time(self):
+		return self.error_time.strftime('%I:%M %p')
+
+	def error_display(self):
+		text = ("We could not find an available " +
+				self.error_emp_type.et_type + 
+				" to fill the " + 
+				self.error_time.strftime('%I:%M %p') +
+				#" to " + 
+				#self.ConvertTimeSliceToDateTime(timeslice+1).strftime('%I:%M %p') + 
+				" timeslot based on your criteria.")
+
+		return text
+
+	def __str__(self):
+		return str(self.error_date) + " " + self.error_display_time()
+
+class RequestDayTime(models.Model):
+	
+	# store request types
+	PREFERRED = 'PREF'
+	SKIP = 'SKIP'
 
 	DAYS_OF_WEEK = (
-			(0,'Monday'),
-			(1,'Tuesday'),
-			(2,'Wednesday'),
-			(3,'Thursday'),
-			(4,'Friday'),
-			(5,'Saturday'),
-			(6,'Sunday'),
-			)
+					(0,'Monday'),
+					(1,'Tuesday'),
+					(2,'Wednesday'),
+					(3,'Thursday'),
+					(4,'Friday'),
+					(5,'Saturday'),
+					(6,'Sunday'),
+					)
 	
 	REQUEST_TYPES = (
-        		  (PREFERRED, 'Preferred'),
-        		  (SKIP, 'Cannot Work'),
-    			 )
+	        		(PREFERRED, 'Preferred'),
+	        		(SKIP, 'Cannot Work'),
+	    			)
 
 	# employee key
-	dtr_employee = models.ForeignKey(Person)
+	rqst_day_employee = models.ForeignKey(Person)
 
 	# Day of the week
-	dtr_day_of_week = models.IntegerField(choices = DAYS_OF_WEEK)
+	day_of_week = models.IntegerField(choices = DAYS_OF_WEEK)
 
 	# Request
-    	dtr_request_type = models.CharField(max_length=4, choices=REQUEST_TYPES)
+	rqst_day_type = models.CharField(
+    									max_length=4,
+    									choices=REQUEST_TYPES)
 
 	# Time the req should start
-	dtr_start_time = models.TimeField("Request Start Time",
-				          default = datetime.time(0,0,0))
+	rqst_day_start_time = models.TimeField(
+											"Request Start Time",
+				          					default = datetime.time(0,0,0))
 	# Time the req should stop
-	dtr_end_time = models.TimeField("Request End Time",
-				          default = datetime.time(23,59,0))
+	rqst_day_end_time = models.TimeField(
+											"Request End Time",
+				          					default = datetime.time(23,59,0))
 
 	class Meta:
-		unique_together = (("dtr_employee","dtr_day_of_week"),)
+		unique_together = (("rqst_day_employee","day_of_week"),)
 
 	# Members
 	def __str__(self):
-		return str(self.dtr_employee) + ' ' + str(self.dtr_day_of_week) + ' ' + str(self.dtr_start_time.strftime("%H:%M")) + " " +  str(self.dtr_request_type)
+		return str(self.rqst_day_employee) + ' ' + str(self.get_day_of_week_display()) + ' ' + str(self.rqst_day_start_time.strftime("%H:%M")) + " " +  str(self.rqst_day_type)
 
-'''
 
-class DateTimeRequest(models.Model):
+class RequestDateTime(models.Model):
 	# There are going to be serveral of these if a vaca spans multiple days 
-
-	# date key
-	# TODO: maybe need to make this required somehow
-	request_date = models.DateField()
-
-	# employee key
-	request_employee = models.ForeignKey(Person)
-
-	# start and end times
-	request_start_time = models.TimeField("Request Start Time",
-				              default = datetime.time(0,0,0))
-	request_end_time = models.TimeField("Request End Time",
-				            default = datetime.time(23,59,0))
 	
 	# store request types
 	VACATION = 'VACA'
 	SICK = 'SICK'
 	PREFERRED = 'PREF'
 	SKIP = 'SKIP'
+
+	# date key
+	# TODO: maybe need to make this required somehow
+	rqst_date_date = models.DateField()
+
+	# employee key
+	rqst_date_employee = models.ForeignKey(Person)
+
+	# start and end times
+	rqst_date_start_time = models.TimeField("Request Start Time",
+				              default = datetime.time(0,0,0))
+	rqst_date_end_time = models.TimeField("Request End Time",
+				            default = datetime.time(23,59,0))
 	
 	REQUEST_TYPES = (
-        		  (VACATION, 'Vacation'),
-        		  (SICK, 'Sick'),
-        		  (PREFERRED, 'Preferred'),
-        		  (SKIP, 'Cannot Work'),
-    			 )
-
-    	request_type = models.CharField(max_length=4, choices=REQUEST_TYPES)
+        		  		(VACATION, 'Vacation'),
+        				(SICK, 'Sick'),
+        				(PREFERRED, 'Preferred'),
+        				(SKIP, 'Cannot Work'),
+    				)
+	
+	rqst_date_type = models.CharField(
+    									max_length=4,
+    									choices=REQUEST_TYPES)
 
 	# Members
 	def displayRequestDateSpan(self):
-		return str(self.request_date) + ' ' + str(self.request_start_time) + ' - ' + str(self.request_end_time)
+		return str(self.rqst_date_date) + ' ' + str(self.rqst_date_start_time) + ' - ' + str(self.rqst_date_end_time)
 
 	def __str__(self):
-		return str(self.request_employee) + ' ' + self.displayRequestDateSpan() + ' ' + self.get_request_type_display()
+		return str(self.rqst_date_employee) + ' ' + self.displayRequestDateSpan() + ' ' + self.get_rqst_date_type_display()
 
 class EmployeeType(models.Model):
 	
@@ -275,49 +307,49 @@ class EmployeeTypeRequirement(models.Model):
 	def __str__(self):
 		return str(self.etr_employee_type) + ' ' + str(self.etr_employee_type_count)
 
-class EmployeeRequirementDateTimeOverride(models.Model):
+class RequirementDateTime(models.Model):
 
 	# DateTime
-	erd_datetime = models.DateTimeField()
+	rqmt_date_datetime = models.DateTimeField()
 
 	# Requirement
-	erd_requirement = models.ForeignKey(EmployeeTypeRequirement)
+	rqmt_date_requirement = models.ForeignKey(EmployeeTypeRequirement)
 
 	class Meta:
-		unique_together = (("erd_datetime","erd_requirement"),)
+		unique_together = (("rqmt_date_datetime","rqmt_date_requirement"),)
 
 	# Members
 	def __str__(self):
-		return str(self.erd_datetime.strftime("%Y-%m-%d %H:%M")) + " " +  str(self.erd_requirement)
+		return str(self.rqmt_date_datetime.strftime("%Y-%m-%d %H:%M")) + " " +  str(self.rqmt_date_requirement)
 
-class EmployeeRequirementTime(models.Model):
+class RequirementDayTime(models.Model):
 
 	days_of_week = (
-			(0,'Monday'),
-			(1,'Tuesday'),
-			(2,'Wednesday'),
-			(3,'Thursday'),
-			(4,'Friday'),
-			(5,'Saturday'),
-			(6,'Sunday'),
-			)
+					(0,'Monday'),
+					(1,'Tuesday'),
+					(2,'Wednesday'),
+					(3,'Thursday'),
+					(4,'Friday'),
+					(5,'Saturday'),
+					(6,'Sunday'),
+					)
 
 	# Day of the week
 	day_of_week = models.IntegerField(choices = days_of_week)
 
 	# Time the req should take effect
-	ert_start_time = models.TimeField("Effective Hour",
+	rqmt_day_start_time = models.TimeField("Effective Hour",
 				          default = datetime.time(0,0,0))
 
 	# Requirement
-	ert_requirement = models.ForeignKey(EmployeeTypeRequirement)
+	rqmt_day_requirement = models.ForeignKey(EmployeeTypeRequirement)
 
 	class Meta:
-		unique_together = (("day_of_week","ert_start_time","ert_requirement"),)
+		unique_together = (("day_of_week","rqmt_day_start_time","rqmt_day_requirement"),)
 
 	# Members
 	def __str__(self):
-		return str(self.day_of_week)+ ' ' + str(self.ert_start_time.strftime("%H:%M")) + " " +  str(self.ert_requirement)
+		return str(self.get_day_of_week_display())+ ' ' + str(self.rqmt_day_start_time.strftime("%H:%M")) + " " +  str(self.rqmt_day_requirement)
 
 
 

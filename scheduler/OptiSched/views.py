@@ -10,7 +10,7 @@ from django.template import RequestContext, loader
 
 from django.shortcuts import render_to_response, get_object_or_404, render, redirect
 
-from .models import Date,Shift,Person
+from .models import Date,EmployeeTypeShiftError,Shift,Person
 
 from .forms import NavDateForm,CreateDateForm
 
@@ -25,8 +25,12 @@ from django.utils.formats import get_format
 
 import pdb
 
-import MakeObject
+#import MakeObject
+import Workday
 import ScheduleDateTimeUtilities
+#import viewHelperFunctions
+
+TIMESLICE = 30
 
 '''
 def index(request):
@@ -69,53 +73,43 @@ def dashboard(request):
 
 def index(request):
 
-	if(request.GET.get('mybtn')):
-   		 MakeObject.make_object( int(request.GET.get('mytextbox')) )
+	#if(request.GET.get('mybtn')):
+   	#	 MakeObject.make_object( int(request.GET.get('mytextbox')) )
 	return render_to_response('index.html')
 
 def create_schedule(request):
-
 	template_stay = 'CreateSchedule.html'
 	template_redirect = 'OptiSched:ViewManagerDay'
-	
+
 	# if this is a POST request we need to process the form data
 	if request.method == 'POST':
-        	# create a form instance and populate it with data from the request:
+		# create a form instance and populate it with data from the request:
 		create_date_form = CreateDateForm(request.POST)
-		
-        	# check whether it's valid:
-        	if create_date_form.is_valid():
-        		# process the data in form.cleaned_data as required
-			'''			
-			date_external = create_date_form.cleaned_data['f_createdate']
-			dateformat = DateFormat(date_external)
-			new_date = dateformat.format('Y-m-d')
-			'''
+		# check whether it's valid:
+		if create_date_form.is_valid():
+			# process the data in form.cleaned_data as required
 			new_date = date_external = create_date_form.cleaned_data['f_createdate']
-			
 			if(Date.objects.filter(date=new_date)):
 				context = {
-						'CreateDateForm': create_date_form,
-						'error_msg': "Schedule already exists for this date",
-					}
+				'CreateDateForm': create_date_form,
+				'error_msg': "Schedule already exists for this date",
+				}
 				return render(request,template_stay,context)
-            		# redirect to a new URL:
 			else:
-				# Create a new schedule with the new_date
 				request.session['DATE_STR'] = new_date.isoformat()
-				MakeObject.make_schedule( new_date )
-            			return HttpResponseRedirect(reverse(template_redirect))
-		# not necessary, form takes care of this		
+				a_workday = Workday.CreateDay(
+												date = new_date,
+												timeslice = TIMESLICE)
+				a_workday.GenerateShifts()
+				a_workday.Save()
+				return HttpResponseRedirect(reverse(template_redirect))
 		else:
-			#pdb.set_trace()
 			context = {
-					'CreateDateForm': create_date_form,
-					'error_msg': "Invalid Date Format",
-					}
+			'CreateDateForm': create_date_form,
+			'error_msg': "Invalid Date Format",
+			}
 			return render(request,template_stay,context)
-
-    	# if a GET (or any other method) we'll create a blank form
-    	else:
+	else:
 		create_date_form = CreateDateForm(initial = request.GET)
 		context = {'CreateDateForm': create_date_form}
 		return render(request,template_stay,context)
@@ -169,23 +163,30 @@ def ViewManagerDay(request):
 			
 			if date:
 				try:
-					work_day = Date.objects.get(date=date)
-		    			shifts_per_date = Shift.objects.filter(shift_date=date)
-					shifts_per_date = sorted(shifts_per_date, key=operator.attrgetter('start_time'))
-		    			context = {
-							'NavDateForm': navform,
-							'work_day_display': work_day.date_display,
-		   					'shifts': shifts_per_date,
+					work_day=Date.objects.get(date=date)
+					shifts_per_date=Shift.objects.filter(shift_date=date)
+					shifts_per_date=sorted(
+												shifts_per_date,
+												key=operator.attrgetter('start_time')
+											)
+					date_errors = EmployeeTypeShiftError.objects.filter(
+																		error_date = date
+																		).order_by('error_emp_type','error_time')
+					context = {
+								'NavDateForm': navform,
+								'work_day_display': work_day.date_display,
+			   					'shifts': shifts_per_date,
+			   					'date_errors':date_errors,
 		    					}
 				except ObjectDoesNotExist:
     					context = {
-							'NavDateForm': navform,							
-							'Error': "No Schedule For Date",
-							}
+    								'NavDateForm': navform,
+    								'Error': "No Schedule For Date"
+    							}
 		else:
 		
 			context = {
-					'NavDateForm': navform,
+						'NavDateForm': navform,
 					}
 	else:
 		
@@ -201,13 +202,18 @@ def ViewManagerDay(request):
 		if date:
 			try:
 				work_day = Date.objects.get(date=date)
-	    			shifts_per_date = Shift.objects.filter(shift_date=date)
+				shifts_per_date = Shift.objects.filter(shift_date=date)
 				shifts_per_date = sorted(shifts_per_date, key=operator.attrgetter('start_time'))
-	    			context = {
-						'NavDateForm': navform,
-						'work_day_display': work_day.date_display,
-	   					'shifts': shifts_per_date,
-	    					}
+				employee_type_shift_errors = EmployeeTypeShiftError.objects.filter(
+																					error_date = date
+																					).order_by('error_emp_type','error_time')
+				#date_error_groups = ViewHelperFunctions.ConvertErrorsToGroups(employee_type_shift_errors,TIMESLICE)
+				context = {
+							'NavDateForm': navform,
+							'work_day_display': work_day.date_display,
+	   						'shifts': shifts_per_date,
+			   				'date_errors':employee_type_shift_errors,
+	   					}
 			except ObjectDoesNotExist:
 				context = {
 						'NavDateForm': navform,							

@@ -49,7 +49,7 @@
 			  		<div class="progress-bar progress-bar-trans" role="progressbar" style="width:{{ shift.before_working_day_pc }}%">
 			    		Not working
 			  		</div>
-			 		<div class="progress-bar progress-bar-success  role="progressbar" style="width:{{ shift.working_day_pc }}%">
+			 		<div class="progress-bar progress-bar-success " role="progressbar" style="width:{{ shift.working_day_pc }}%">
 			    		Working 
 			  		</div>
 				</div>
@@ -58,7 +58,16 @@
 		      </tr>
 		     {% endfor %}
 		    </tbody>
-		  </table>          
+		  </table> 
+
+	{% if date_errors %}
+		<ul>
+		{% for error in date_errors %}
+			<li> {{ error.error_display }} </li>
+		{% endfor %}
+		</ul>
+	{% endif %}       
+	 
 {% else %}
 	<p> {{ Error }} </p>
 {% endif %}

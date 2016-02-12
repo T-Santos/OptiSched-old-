@@ -25,22 +25,18 @@ class DateAdmin(admin.ModelAdmin):
 
     	inlines = [ShiftInline]
 
-class EmployeeTypeRequirementAdmin(admin.ModelAdmin):
-
-	model = EmployeeTypeRequirement	
-	list_display = ('etr_employee_type','etr_employee_type_count')
-
-class EmployeeRequirementTimeAdmin(admin.ModelAdmin):
-
-	model = EmployeeRequirementTime	
-	list_display = ('day_of_week','ert_start_time','ert_requirement')
-
 admin.site.register(Shift,ShiftAdmin)
-admin.site.register(Date, DateAdmin)
+admin.site.register(Date,DateAdmin)
 admin.site.register(Person,PersonAdmin)
-admin.site.register(DateTimeRequest)
+
 admin.site.register(EmployeeType)
-admin.site.register(EmployeeTypeRequirement,EmployeeTypeRequirementAdmin)
 admin.site.register(PersonEmployeeType)
-admin.site.register(EmployeeRequirementTime,EmployeeRequirementTimeAdmin)
-admin.site.register(EmployeeRequirementDateTimeOverride)
+admin.site.register(EmployeeTypeRequirement)
+
+admin.site.register(RequirementDayTime)
+admin.site.register(RequirementDateTime)
+
+admin.site.register(RequestDayTime)
+admin.site.register(RequestDateTime)
+
+admin.site.register(EmployeeTypeShiftError)

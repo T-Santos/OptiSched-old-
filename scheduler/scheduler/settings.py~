@@ -24,9 +24,6 @@ SECRET_KEY = 'zg^k+y4co)4baja!y&f(=8ucr+k0co@#3i1th!fr6f95w6e$tp'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-#SITE_ID = 1 #"OptiSched.com"
-SITE_ID = 2 #"localhost:8000"
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ALLOWED_HOSTS = []
 
@@ -109,6 +106,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+# used to determine what the timeslice is for determining datetimes
+TIME_SLICE = 15
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
@@ -125,7 +125,9 @@ STATICFILES_DIRS = (
 # django registration redux app
 ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_AUTO_LOGIN = True
-SITE_ID = 1
+#SITE_ID = 1 #"OptiSched.com"
+SITE_ID = 2 #"localhost:8000"
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 LOGIN_REDIRECT_URL =  '/OptiSched/Dashboard'
 
 # crispy forms tags
