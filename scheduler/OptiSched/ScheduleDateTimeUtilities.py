@@ -14,9 +14,9 @@ def FloorDatetime(datetime,time_slice_amt):
 
     if not(time_slice_amt == 60):
         datetime = datetime - dt.timedelta(
-                                        minutes=datetime.minute % time_slice_amt,
-                                        seconds=datetime.second,
-                                        microseconds=datetime.microsecond)
+                                            minutes=datetime.minute % time_slice_amt,
+                                            seconds=datetime.second,
+                                            microseconds=datetime.microsecond)
     return datetime
     
 def CeilingDatetime(datetime,time_slice_amt):

@@ -1,6 +1,11 @@
-{% extends 'base_schedule.html' %}
+{% extends 'base.html' %}
 
 {% block head_title %}Manager Day | {{ block.super }} {% endblock %}
+
+
+{% block date_nav_bar %}
+	{% include 'DateNavBar.html' %}
+{% endblock %}
 
 {% block content %}
 
@@ -9,10 +14,35 @@
 .progress-bar-trans {
 	background-color: transparent !important;
 }
-</style>
+</style>   
 
-<h2>{{ work_day_display }}</h2>
   {% if shifts %} 
+
+	<div class="row">
+	    <h2 style="border-bottom: 1px solid #BFBCBC;padding-bottom: 5px;">
+	        View Shifts for {{ work_day_display }}
+	    </h2>
+	</div> 
+	{% if date_errors %}
+	<div class="col-md-8">
+		<div class="panel-group" >
+			<div class="panel panel-danger">
+				<div class="panel-heading" data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+					<h4 class="panel-title">
+						Schedule Errors
+					</h4>
+				</div>
+				<div id="collapse1" class="panel-collapse collapse">
+					<ul class="list-group">
+					{% for error in date_errors %}
+						<li class="list-group-item"> {{ error }} </li>
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	{% endif %} 
 
   <table class="table table-striped">
 		    <thead>
@@ -58,15 +88,7 @@
 		      </tr>
 		     {% endfor %}
 		    </tbody>
-		  </table> 
-
-	{% if date_errors %}
-		<ul>
-		{% for error in date_errors %}
-			<li> {{ error.error_display }} </li>
-		{% endfor %}
-		</ul>
-	{% endif %}       
+		  </table>    
 	 
 {% else %}
 	<p> {{ Error }} </p>

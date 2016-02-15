@@ -12,7 +12,7 @@ from django.shortcuts import render_to_response, get_object_or_404, render, redi
 
 from .models import Date,EmployeeTypeShiftError,Shift,Person
 
-from .forms import NavDateForm,CreateDateForm
+from .forms import NavDateForm,CreateDateForm,CreateDateSpanForm
 
 import operator
 import collections
@@ -28,14 +28,9 @@ import pdb
 #import MakeObject
 import Workday
 import ScheduleDateTimeUtilities
-#import viewHelperFunctions
+import ViewHelperFunctions
 
 TIMESLICE = 30
-
-'''
-def index(request):
-	return HttpResponse("Hello, world. You're at the OptiSched index.")
-'''
 
 def home(request):
 	context = {}
@@ -56,10 +51,11 @@ def contact(request):
 def dashboard(request):
 	# TODO: Maybe pass if the user is an employee or manager to show them a different dash
 	#pdb.set_trace()
-	recently_created_days = Date.objects.filter(date__lte=dt.date.today()).order_by('-date')[:5]
-	recently_created_shifts = Shift.objects.filter(shift_date__lte=dt.date.today()).order_by('-shift_date')[:5]
+	from_date = dt.date.today()+ dt.timedelta(days=3)
+	recently_created_days = Date.objects.filter(date__lte=from_date).order_by('-date')[:7]
+	recently_created_shifts = Shift.objects.filter(shift_date__lte=from_date).order_by('-shift_date')[:5]
 
-	recently_viewed_shifts = Shift.objects.filter(shift_date__lte=dt.date.today()).order_by('-shift_date')[:5]
+	recently_viewed_shifts = Shift.objects.filter(shift_date__lte=from_date).order_by('-shift_date')[:5]
 	recently_viewed_employees = Person.objects.all()[:5]
 
 	context = {
@@ -71,12 +67,6 @@ def dashboard(request):
 	template = "Dashboard.html"
 	return render(request,template,context)
 
-def index(request):
-
-	#if(request.GET.get('mybtn')):
-   	#	 MakeObject.make_object( int(request.GET.get('mytextbox')) )
-	return render_to_response('index.html')
-
 def create_schedule(request):
 	template_stay = 'CreateSchedule.html'
 	template_redirect = 'OptiSched:ViewManagerDay'
@@ -84,65 +74,81 @@ def create_schedule(request):
 	# if this is a POST request we need to process the form data
 	if request.method == 'POST':
 		# create a form instance and populate it with data from the request:
-		create_date_form = CreateDateForm(request.POST)
+		form = CreateDateForm(request.POST)
+		context = {'CreateDateForm': form}
 		# check whether it's valid:
-		if create_date_form.is_valid():
+		if form.is_valid():
 			# process the data in form.cleaned_data as required
-			new_date = date_external = create_date_form.cleaned_data['f_createdate']
-			if(Date.objects.filter(date=new_date)):
-				context = {
-				'CreateDateForm': create_date_form,
-				'error_msg': "Schedule already exists for this date",
-				}
-				return render(request,template_stay,context)
-			else:
-				request.session['DATE_STR'] = new_date.isoformat()
+			new_date = date_external = form.cleaned_data['f_date']
+			request.session['DATE_STR'] = new_date.isoformat()
+			a_workday = Workday.CreateDay(
+											date = new_date,
+											timeslice = TIMESLICE
+											)
+			a_workday.GenerateShifts()
+			a_workday.Save()
+			return HttpResponseRedirect(reverse(template_redirect))
+	else:
+		form = CreateDateForm()
+		context = {'CreateDateForm': form}
+	
+	return render(request,template_stay,context)
+
+def daterange(start_date, end_date):
+    for n in range(int ((end_date - start_date).days)+1):
+        yield start_date + timedelta(n)
+
+def create_date_span(request):
+
+	template = "CreateDateSpan.html"
+	template_redirect = "OptiSched:ViewManagerDay"
+
+	if request.method == 'POST':
+
+		form = CreateDateSpanForm(data = request.POST)
+
+		if form.is_valid():
+
+			from_date = form.cleaned_data.get('f_from_date')
+			thru_date = form.cleaned_data.get('f_thru_date')
+			#from_date_obj = dt.datetime.strptime(from_date, "%Y-%m-%d").date()
+			#thru_date_obj = dt.datetime.strptime(thru_date, "%Y-%m-%d").date()
+
+			start_time = form.cleaned_data.get('f_start_time')
+			end_time = form.cleaned_data.get('f_end_time')
+
+			#start_time_obj = dt.datetime.strptime(start_time, "%H:%M:%S").time()
+			#end_time_obj = dt.datetime.strptime(end_time, "%H:%M:%S").time()
+
+
+			all_dates = []
+
+			# create and populate dates
+			for single_date in daterange(from_date,thru_date):
+
 				a_workday = Workday.CreateDay(
-												date = new_date,
+												date = single_date,
+												date_start_time = start_time,
+												date_end_time = end_time,
 												timeslice = TIMESLICE)
 				a_workday.GenerateShifts()
-				a_workday.Save()
-				return HttpResponseRedirect(reverse(template_redirect))
-		else:
-			context = {
-			'CreateDateForm': create_date_form,
-			'error_msg': "Invalid Date Format",
+
+				all_dates.append(a_workday)
+			
+			# save all dates
+			for workday in all_dates:
+				workday.Save()
+
+			request.session['DATE_STR'] = from_date.isoformat()
+			return HttpResponseRedirect(reverse(template_redirect))
+	else:        
+
+		form = CreateDateSpanForm(data = request.GET)
+
+	context = {
+				'DateSpanForm': form,
 			}
-			return render(request,template_stay,context)
-	else:
-		create_date_form = CreateDateForm(initial = request.GET)
-		context = {'CreateDateForm': create_date_form}
-		return render(request,template_stay,context)
-
-def button(request):
-
-	if(request.method == "POST"):
-		
-        	# Always return an HttpResponseRedirect after successfully dealing
-        	# with POST data. This prevents data from being posted twice if a
-        	# user hits the Back button.
-   		MakeObject.make_object()
-        	return HttpResponseRedirect(reverse('OptiSched:employees'))
-	else:
-		return render(request,'OptiSched/button.html')
-
-def week(request, date):
-	
-	employee_list = []
-    	shifts_per_date = Shift.objects.filter(shift_date=date)
-	shifts_per_date = sorted(shifts_per_date, key=operator.attrgetter('employee.last_name'))
-
-	for shift in shifts_per_date:
-		employee_list.append(shift.employee)
-
-	employee_list = list(set(employee_list))
-
-    	template = loader.get_template('OptiSched/ViewWeek.html')
-    	context = RequestContext(request, {
-   				           'employee_list': employee_list,
-					   'shifts_per_date': shifts_per_date,
-    					   })
-  	return HttpResponse(template.render(context))
+	return render(request,template,context)
 
 @login_required
 def ViewManagerDay(request):
@@ -150,169 +156,43 @@ def ViewManagerDay(request):
 	template = 'ViewManagerDay.html'
 
 	if request.method == 'POST':
-	
-		navform = NavDateForm(request.POST)
-
-		if navform.is_valid():
-        	# process the data in form.cleaned_data as required
-			#date_external = navform.cleaned_data['navdate']
-			#dateformat = DateFormat(date_external)
-			#date = dateformat.format('Y-m-d')
-
-			date = navform.cleaned_data['navdate']
-			
-			if date:
-				try:
-					work_day=Date.objects.get(date=date)
-					shifts_per_date=Shift.objects.filter(shift_date=date)
-					shifts_per_date=sorted(
-												shifts_per_date,
-												key=operator.attrgetter('start_time')
-											)
-					date_errors = EmployeeTypeShiftError.objects.filter(
-																		error_date = date
-																		).order_by('error_emp_type','error_time')
-					context = {
-								'NavDateForm': navform,
-								'work_day_display': work_day.date_display,
-			   					'shifts': shifts_per_date,
-			   					'date_errors':date_errors,
-		    					}
-				except ObjectDoesNotExist:
-    					context = {
-    								'NavDateForm': navform,
-    								'Error': "No Schedule For Date"
-    							}
-		else:
-		
-			context = {
-						'NavDateForm': navform,
-					}
+		"View does not accept POSTs"
 	else:
-		
-		navform = NavDateForm(initial = request.GET)
-		  
-		if request.session.get('DATE_STR',False):
-			date = request.session['DATE_STR']
-			request.session['DATE'] = None
-		elif request.GET.get('navdate',False):
+
+		form = NavDateForm(data = request.GET)
+
+		if request.GET.get('navdate',False):
 			date = request.GET['navdate']
 		else:
 			date = dt.datetime.today().strftime("%Y-%m-%d")			
+
 		if date:
 			try:
 				work_day = Date.objects.get(date=date)
-				shifts_per_date = Shift.objects.filter(shift_date=date)
+				shifts_per_date = Shift.objects.filter(shift_date=work_day)
 				shifts_per_date = sorted(shifts_per_date, key=operator.attrgetter('start_time'))
-				employee_type_shift_errors = EmployeeTypeShiftError.objects.filter(
-																					error_date = date
-																					).order_by('error_emp_type','error_time')
-				#date_error_groups = ViewHelperFunctions.ConvertErrorsToGroups(employee_type_shift_errors,TIMESLICE)
+
+				date_error_groups = ViewHelperFunctions.ConvertErrorsToGroups(work_day)
+				date_error_groups_compressed = ViewHelperFunctions.CompressErrorGroupsToStrings(work_day.date,date_error_groups,TIMESLICE)
+				date_error_strings = ViewHelperFunctions.ConvertCompressedErrorsToStrings(date_error_groups_compressed)
+				
 				context = {
-							'NavDateForm': navform,
+							'NavDateForm': form,
 							'work_day_display': work_day.date_display,
 	   						'shifts': shifts_per_date,
-			   				'date_errors':employee_type_shift_errors,
+			   				'date_errors':date_error_strings,
 	   					}
 			except ObjectDoesNotExist:
 				context = {
-						'NavDateForm': navform,							
+						'NavDateForm': form,							
 						'Error': "No Schedule For Date",
 						}
 		else:
 			context = {
-					'NavDateForm': navform,
+					'NavDateForm': form,
 				}
 
 	return render(request,template,context)
-
-@login_required
-def ViewManagerDay2(request, date):
-
-	if request.method == 'POST':
-	
-		navform = NavDateForm(request.POST)
-
-		if navform.is_valid():
-        	# process the data in form.cleaned_data as required
-			#date_external = navform.cleaned_data['navdate']
-			#dateformat = DateFormat(date_external)
-			#date = dateformat.format('Y-m-d')
-
-			date = navform.cleaned_data['navdate']
-			
-			if date:
-				return redirect('OptiSched:ViewManagerDay2',date=date)
-	else:
-		#pdb.set_trace()
-		work_day = Date.objects.get(date=date)
-		shifts_per_date= Shift.objects.filter(shift_date=date)
-		shifts = sorted(shifts_per_date, key=operator.attrgetter('start_time'))
-		navform = NavDateForm(initial={'navdate': date})
-
-		template = 'OptiSched/ViewDay.html'
-		context = {
-					'work_day_display': work_day.date_display,
-					'shifts': shifts,
-					'NavDateForm': navform,
-				}
-
-		return render(request,template,context)
-
-@login_required
-def employees(request):
-
-	employee_list = Person.objects.all()
-	
-	template = loader.get_template('OptiSched/EmployeeList.html')
-	context = RequestContext(request,{
-					  'employee_list': employee_list,
-					 })
-	return HttpResponse(template.render(context))
-
-def day_person(request, date, Person_id):
-    	return HttpResponse("You're looking at the date %s for employee %s." % (date,Person_id))
-
-@login_required
-def employee_week(request, year_num, week_num, employee_id):
-	
-	week_dates = collections.namedtuple('week_dates', ['start_date','end_date'])
-
-	week_dates = ScheduleDateTimeUtilities.get_dates_from_week(int(year_num),int(week_num))
-
-	temp_shifts_per_week = Shift.objects.filter(shift_date__gte = week_dates[0], shift_date__lte = week_dates[1], employee = employee_id)
-
-	temp_employee = Person.objects.get(pk=employee_id)
-
-	# also defines order of the days of the week
-	days_in_week = [0,1,2,3,4,5,6]
-
-	# 0 - 23 = 24
-	hours_in_day = range(0,24)
-
-	# for now they are already sorted
-	#temp_shifts_per_week = sorted(temp_shifts_per_week,key=operator.attrgetter('shift_date')
-
-	# default in having no shifts
-	shifts_per_week = []
-	for day in days_in_week:
-		shifts_per_week.append("NO_SHIFT")
-
-	# populate where we have shifts
-	for day in days_in_week:
-		for shift in temp_shifts_per_week:
-			if( day == shift.shift_date.date.weekday() ):
-				shifts_per_week[day] = shift
-
-	employee_display = temp_employee
-	context = RequestContext(request,{'shifts_per_week':shifts_per_week,
-					'days_in_week':days_in_week,
-					'hours_in_day':hours_in_day,
-					'employee_display':employee_display})
-
-	template = loader.get_template('OptiSched/EmployeeWeekView.html')
-
-    	return HttpResponse(template.render(context))
 
 def ViewEmployeeWeek(request,employee_id,date):
 
@@ -334,31 +214,27 @@ def ViewEmployeeWeek(request,employee_id,date):
 		#pdb.set_trace()
 		work_day = Date.objects.get(date=date)
 		employee = Person.objects.get(pk=employee_id)
-		start_end_week_dates = ScheduleDateTimeUtilities.get_dates_from_week(work_day.date.isocalendar()[0],work_day.date.isocalendar()[1])
-		shifts_in_week = Shift.objects.filter(shift_date__gte = start_end_week_dates[0], shift_date__lte = start_end_week_dates[1], employee = employee)
+		start_end_week_dates = ScheduleDateTimeUtilities.get_dates_from_week(
+																				work_day.date.isocalendar()[0],
+																				work_day.date.isocalendar()[1]
+																			)
+		shifts_in_week = Shift.objects.filter(
+												shift_date__gte = start_end_week_dates[0],
+												shift_date__lte = start_end_week_dates[1],
+												employee = employee
+											)
 		
-
 		navform = NavDateForm(initial={'navdate': date})
 
 		template = 'OptiSched/ViewEmployeeWeek.html'
 		context = {
-					'work_day_display': work_day.date_display,
+					'employee': employee,
 					'shifts': shifts_in_week,
 					'NavDateForm': navform,
+					'week_start_date':start_end_week_dates[0],
+					'week_end_date':start_end_week_dates[1],
 				}
-
 		return render(request,template,context)
-'''
-def get_dates_from_week(year,week):
-
-     d = date(year,1,1)
-     if(d.weekday()<= 3):
-         d = d - timedelta(d.weekday()+1)             
-     else:
-         d = d + timedelta(7-(d.weekday()+1))
-     dlt = timedelta(days = (week-1)*7)
-     return d + dlt,  d + dlt + timedelta(days=6)
-'''
 
 
 

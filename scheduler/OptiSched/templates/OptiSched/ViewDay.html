@@ -1,16 +1,10 @@
-{% extends 'base_schedule.html' %}
-<!--
-{% if shifts_per_date %}
-    <ul>
-    {% for shift in shifts_per_date %}
-        <li><a href="/Optisched/{{ Date }}/">{{ shift.display_details }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No shifts are available to display.</p>
-{% endif %}
--->
+{% extends 'base.html' %}
+
 {% block head_title %}Week | {{ block.super }} {% endblock %}
+
+{% block date_nav_bar %}
+	{% include 'DateNavBar.html' %}
+{% endblock %}
 
 {% block content %}
 
@@ -22,7 +16,33 @@
 }
 </style>
 
-<h2>{{ work_day_display }}</h2>
+<div class="row">
+    <h2 style="border-bottom: 1px solid #BFBCBC;padding-bottom: 5px;">
+        View Shifts for {{ work_day_display }}
+    </h2>
+</div> 
+
+	{% if date_errors %}
+	<div class="col-md-8">
+		<div class="panel-group" data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+			<div class="panel panel-danger">
+				<div class="panel-heading">
+					<h4 class="panel-title">
+						Schedule Errors
+					</h4>
+				</div>
+				<div id="collapse1" class="panel-collapse collapse">
+					<ul class="list-group">
+					{% for error in date_errors %}
+						<li class="list-group-item"> {{ error }} </li>
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	{% endif %}   
+	
   {% if shifts %} 
 
   <table class="table table-striped">

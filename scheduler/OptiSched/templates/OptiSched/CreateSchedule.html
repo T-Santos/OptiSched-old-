@@ -1,75 +1,91 @@
-{% extends 'base_schedule.html' %}
+{% extends 'base.html' %}
  <!-- needs to be below extends 
 {% load crispy_forms_tags %}-->
 
  <!-- Browser tab's title -->
-{% block head_title %}Create | {{ block.super }} {% endblock %}
+{% block head_title %}Create Day | {{ block.super }} {% endblock %}
 
 {% block content %}
-{% if error_msg %}<p><strong>{{ error_msg }}</strong></p>{% endif %}
 
 <div class="row">
-        <div class='col-sm-6'>
-	   <form name='create_form' action="{% url 'OptiSched:create_schedule' %}" method="POST">
-	    {% csrf_token %}
+    <h2 style="border-bottom: 1px solid #BFBCBC;padding-bottom: 5px;">
+        Create Shifts for Date
+    </h2>
+</div>    
+
+<div class="row">
+    <div class='col-sm-6'>
+
+        {% if CreateDateForm.errors %}
+            {% for field in form %}
+                {% for error in CreateDateForm.errors %}
+                    <div class="text-danger">
+                        <strong>{{ error|escape }}</strong>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in CreateDateForm.non_field_errors %}
+                <div class="text-danger">
+                    <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+
+        <form name='CreateDateForm' action="{% url 'OptiSched:create_schedule' %}" method="POST">
+            {% csrf_token %}
             <div class="form-group" >
                 <div class="input-group date" >
-                    <input type='text' 
-			   class="form-control" 
-			   name="{{ CreateDateForm.f_createdate.name }}" 
-			   value="{{ CreateDateForm.f_createdate.value }}"
-			   id='create_date_picker'
-			   readonly="readonly"
-		    />
-                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar" onclick="create_form.submit()"></span></span>
-		    <!--
-		    <span class="input-group-addon"><span class="glyphicon glyphicon-th"></span></span>
-		    -->
-                </div>
-            </div>
-	  </form>
-        </div>
-    <script type="text/javascript">
-        $(function() {              
-           $('#create_date_picker').datetimepicker({
-                 			format: 'YYYY-MM-DD',
-				        useStrict: true,
-					allowInputToggle: true,
-				    	ignoreReadonly: true,
-					}).find('input').addClass("form-control");
-        });      
-    </script>
-    </div>
-
-
-{% endblock content %}
-
-<!--
-    <div class="row">
-        <div class='col-sm-6'>
-	   <form name='form' action="{% url 'OptiSched:create_schedule' %}" method="POST">
-	    {% csrf_token %}
-            <div class="form-group" >
-                <div class='input-group date' id='f_createdate_datepicker'>
-                    <input type='text' class="form-control" 
-			   name="{{ CreateDateForm.f_createdate.name }}" 
-			   value="{{ CreateDateForm.f_createdate.value }}"
-			   onchange ='this.form.submit()' 
-			   readonly />
+                    <input type='text' placeholder="Date" class="form-control" name="{{ CreateDateForm.f_date.name }}" value="{{ CreateDateForm.f_date.value }}"/>
                     <span class="input-group-addon">
-                        <span class="glyphicon glyphicon-calendar" onclick="form.submit()"></span>
+                        <span class="glyphicon glyphicon-calendar"></span>
                     </span>
                 </div>
-		<input type="submit" value="Update" style="position: absolute; left: -999999px; width: 1px; height: 1px;" />
+                <p></p>
+                <div class="form-group">
+                    <div class='input-group time'>
+                        <input type='text' placeholder='Start Time' class="form-control" value="{{ CreateDateForm.f_start_time.value }}" name="{{ CreateDateForm.f_start_time.name }}">
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-time"></span>
+                        </span>
+                    </div>
+                    <p></p>
+                    <div class='input-group time'>
+                        <input type='text' placeholder='End Time' class="form-control" value="{{ CreateDateForm.f_end_time.value }}" name="{{ CreateDateForm.f_end_time.name }}">
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-time"></span>
+                        </span>
+                    </div>
+                </div>
             </div>
-	  </form>
-        </div>
-    <script type="text/javascript">
-        $(function() {              
-           $('#f_createdate_datepicker').datetimepicker({
-                 			format: 'YYYY-MM-DD'
-					});
-        });      
-    </script>
+            <input class="btn btn-success" type="submit" value="Create Workday">
+        </form>
     </div>
--->
+</div>
+
+<script type="text/javascript">
+
+    $(function() {              
+                   $('.date').datetimepicker({
+                                                format: 'YYYY-MM-DD',
+                                                useStrict: true,
+                                                allowInputToggle: true,
+                                                ignoreReadonly: true,
+                                                })
+                            .find('input')
+                            .addClass("form-control");
+                }); 
+
+    $(function() {              
+                   $('.time').datetimepicker({
+                                                format: 'HH:mm',
+                                                useStrict: true,
+                                                allowInputToggle: true,
+                                                ignoreReadonly: true,
+                                                })
+                            .find('input')
+                            .addClass("form-control");
+                });  
+</script>
+
+{% endblock content %}

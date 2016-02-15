@@ -21,6 +21,7 @@
             <li {% if about_url in request.get_full_path %} class="active" {% endif %}><a href="{{ about_url }}">About</a></li>
             <li {% if contact_url in request.get_full_path %} class="active" {% endif %}><a href="{{ contact_url }}">Contact</a></li>
             <li {% if dash_url in request.get_full_path %} class="active" {% endif %}><a href="{{ dash_url }}">Dashboard</a></li>
+            <!-- 
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Additional <span class="caret"></span></a>
               <ul class="dropdown-menu">
@@ -32,6 +33,7 @@
                 <li><a href="#">Separated link</a></li>
                 <li><a href="#">One more separated link</a></li>
               </ul>
+            -->
             </li>
 	
           </ul>

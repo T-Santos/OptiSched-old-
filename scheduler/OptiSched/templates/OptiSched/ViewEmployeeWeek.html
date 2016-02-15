@@ -1,4 +1,4 @@
-{% extends 'base_schedule.html' %}
+{% extends 'base.html' %}
 
 {% block head_title %}Employee Week | {{ block.super }} {% endblock %}
 
@@ -12,7 +12,12 @@
 }
 </style>
 
-<h2>{{ work_day_display }}</h2>
+<div class="row">
+    <h2 style="border-bottom: 1px solid #BFBCBC;padding-bottom: 5px;">
+        View Shifts for {{ employee.name_normal_id }} from {{ week_start_date }} to {{ week_end_date }}
+    </h2>
+</div> 
+
   {% if shifts %} 
 
   <table class="table table-striped">

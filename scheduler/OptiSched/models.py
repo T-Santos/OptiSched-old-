@@ -26,6 +26,12 @@ class Person(models.Model):
 	def name(self):
         	return ''.join([self.last_name,',', self.first_name])
 
+	def name_normal(self):
+        	return ''.join([self.first_name,' ',self.last_name])
+
+	def name_normal_id(self):
+        	return ''.join([self.first_name,' ',self.last_name,'(id:',str(self.id),')'])
+
 	def __str__(self):             	
 	        #return str(self.name()) + ' (id: ' + str(self.id) + ')'
 		return str(self.name())
@@ -118,8 +124,9 @@ class Date(models.Model):
 				        default = datetime.time(23,0,0))
 
 	def get_absolute_url(self):
-		#return reverse('OptiSched:day',args=(self.date.isoformat(),))
-		return reverse('OptiSched:ViewManagerDay2',kwargs={'date': self.date.isoformat(),})
+		#"http://localhost:8000/OptiSched/ViewManagerDay/?navdate=2016-02-14"
+		path = '/OptiSched/ViewManagerDay/' + '?navdate=' + self.date.isoformat()
+		return path
 	
 	def total_hours(self):
 		start_hours = self.day_start_time.hour
