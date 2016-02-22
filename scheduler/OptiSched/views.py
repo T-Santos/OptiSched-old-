@@ -80,11 +80,17 @@ def create_schedule(request):
 		if form.is_valid():
 			# process the data in form.cleaned_data as required
 			new_date = date_external = form.cleaned_data['f_date']
+			start_time = form.cleaned_data.get('f_start_time')
+			end_time = form.cleaned_data.get('f_end_time')
+
 			request.session['DATE_STR'] = new_date.isoformat()
+
 			a_workday = Workday.CreateDay(
 											date = new_date,
+											date_start_time = start_time,
+											date_end_time = end_time,
 											timeslice = TIMESLICE
-											)
+										)
 			a_workday.GenerateShifts()
 			a_workday.Save()
 			return HttpResponseRedirect(reverse(template_redirect))
